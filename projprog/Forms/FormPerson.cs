@@ -45,9 +45,16 @@ namespace projprog.Forms
         {
             UpdatecanClick(canClick.disabled);
 
-            dataGridView.CellClick += (object sender, DataGridViewCellEventArgs e) =>
+            dataGridView.CellClick += async (object sender, DataGridViewCellEventArgs e) =>
             {
-                dataGridView_CellClick(sender, e);
+                try
+                {
+                    await dataGridView_CellClick(sender, e);
+                }
+                catch (Exception ex)
+                {
+                    ErrorViewer.ShowError(ex.Message);
+                }
             };
 
             Reset(serial);
@@ -91,7 +98,7 @@ namespace projprog.Forms
                 ErrorViewer.ShowError(ex.Message);
             }
 
-            UpdateDataGridView();
+            await UpdateDataGridView();
         }
 
         void Reset(int serial)
@@ -146,7 +153,13 @@ namespace projprog.Forms
         {
             if (e.RowIndex >= 0)
             {
-                UpdateCurrentInvest(await GetInvpersonFromRow(dataGridView.Rows[e.RowIndex]));
+                Invperson? person = await GetInvpersonFromRow(dataGridView.Rows[e.RowIndex]);
+                if (person == null)
+                {
+                    ErrorViewer.ShowError("This person no longer exists. Press refresh.");
+                    return;
+                }
+                UpdateCurrentInvest(person);
             }
         }
 
@@ -166,10 +179,10 @@ namespace projprog.Forms
             comboBoxResid.Text = currentInvperson.Resid;
             dateTimePickerDbirth.Value = currentInvperson.DBirth != null ? (DateTime)currentInvperson.DBirth : DateTime.Now;
             comboBoxAttr.Text = currentInvperson.Attr;
-            checkBoxExst.Checked = (int)currentInvperson.Exst == 1;
+            checkBoxExst.Checked = currentInvperson.Exst == 1;
             textBoxNickname.Text = currentInvperson.Nickname;
             textBoxOccupation.Text = currentInvperson.Occupation;
-            textBoxArch.Text = ((int)currentInvperson.Arch).ToString();
+            textBoxArch.Text = (currentInvperson.Arch ?? 0).ToString();
             comboBoxStatus.Text = currentInvperson.Status;
             textBoxMobileno.Text = currentInvperson.Mobileno;
             comboBoxGender.Text = currentInvperson.Gender;
