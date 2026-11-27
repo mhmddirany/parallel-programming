@@ -66,6 +66,7 @@ namespace projprog.Forms
 
         void UpdateCheckListItems()
         {
+            checkedListBoxWorld.Items.Clear();
             foreach (string item in currentCheckListItems)
             {
                 checkedListBoxWorld.Items.Add(item);

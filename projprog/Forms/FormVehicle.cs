@@ -47,9 +47,16 @@ namespace projprog.Forms
         {
             UpdatecanClick(canClick.disabled);
 
-            dataGridView.CellClick += (object sender, DataGridViewCellEventArgs e) =>
+            dataGridView.CellClick += async (object sender, DataGridViewCellEventArgs e) =>
             {
-                dataGridView_CellClick(sender, e);
+                try
+                {
+                    await dataGridView_CellClick(sender, e);
+                }
+                catch (Exception ex)
+                {
+                    ErrorViewer.ShowError(ex.Message);
+                }
             };
 
             Reset(serial);
@@ -57,13 +64,7 @@ namespace projprog.Forms
             try
             {
 
-                Task<List<Village>> villagesTask = VillageController.GetAllVillages();
-
-                Task[] tasks = new Task[] { villagesTask };
-
-                await Task.WhenAll(tasks);
-
-                var villages = await villagesTask;
+                var villages = await VillageController.GetAllVillages();
 
                 string[] villageLabels = new string[villages.Count];
                 for (int i = 0; i < villages.Count; i++)
@@ -78,7 +79,7 @@ namespace projprog.Forms
                 ErrorViewer.ShowError(ex.Message);
             }
 
-            UpdateDataGridView();
+            await UpdateDataGridView();
         }
 
         void Reset(int serial)
@@ -142,7 +143,13 @@ namespace projprog.Forms
         {
             if (e.RowIndex >= 0)
             {
-                UpdateCurrentVehicle(await GetVehicleFromRow(dataGridView.Rows[e.RowIndex]));
+                Vehicle? vehicle = await GetVehicleFromRow(dataGridView.Rows[e.RowIndex]);
+                if (vehicle == null)
+                {
+                    ErrorViewer.ShowError("This vehicle no longer exists. Press refresh.");
+                    return;
+                }
+                UpdateCurrentVehicle(vehicle);
             }
         }
 
@@ -154,11 +161,11 @@ namespace projprog.Forms
             numericUpDownVid.Value = (int)currentVehicle.Vid;
             textBoxVNumber.Text = currentVehicle.VNumber;
             comboBoxCode.Text = currentVehicle.Code;
-            dateTimePickerProd.Value = (DateTime)currentVehicle.Prod;
+            dateTimePickerProd.Value = currentVehicle.Prod ?? DateTime.Now;
             textBoxChassis.Text = currentVehicle.Chassis;
             textBoxMotor.Text = currentVehicle.Motor;
-            dateTimePickerAquisition.Value = (DateTime)currentVehicle.Aquisition;
-            numericUpDownPreMiseCirc.Value = (int)currentVehicle.PreMiseCirc;
+            dateTimePickerAquisition.Value = currentVehicle.Aquisition ?? DateTime.Now;
+            numericUpDownPreMiseCirc.Value = currentVehicle.PreMiseCirc ?? 0;
             textBoxColor.Text = currentVehicle.Color;
             textBoxBrand.Text = currentVehicle.Brand;
             textBoxModel.Text = currentVehicle.Model;
@@ -168,10 +175,10 @@ namespace projprog.Forms
             textBoxAddress.Text = currentVehicle.Address;
             comboBoxCity.Text = currentVehicle.City;
             textBoxIqama.Text = currentVehicle.Iqama;
-            checkBoxInCirculation.Checked = (bool)currentVehicle.InCirculation;
+            checkBoxInCirculation.Checked = currentVehicle.InCirculation ?? false;
             textBoxMother.Text = currentVehicle.Mother;
             textBoxMobileno.Text = currentVehicle.Mobileno;
-            numericUpDownAge.Value = (int)currentVehicle.Age;
+            numericUpDownAge.Value = currentVehicle.Age ?? 0;
             textBoxReg.Text = currentVehicle.Reg;
             comboBoxPBirth.Text = currentVehicle.PBirth;
         }
